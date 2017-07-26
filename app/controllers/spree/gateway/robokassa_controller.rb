@@ -1,8 +1,7 @@
 class Spree::Gateway::RobokassaController < Spree::BaseController
   skip_before_filter :verify_authenticity_token, :only => [:result, :success, :fail]
   before_filter :load_order,                     :only => [:result, :success, :fail]
-  ssl_required :show
-  
+
   def show
     @order =  Spree::Order.find(params[:order_id])
     @gateway = @order.available_payment_methods.detect{|x| x.id == params[:gateway_id].to_i }
@@ -20,15 +19,13 @@ class Spree::Gateway::RobokassaController < Spree::BaseController
 
   def result
     if @order && @gateway && valid_signature?(@gateway.options[:password2])
-      payment = @order.payments.build(:payment_method => @order.payment_method)
-      payment.state = "completed"
-      payment.amount = params["OutSum"].to_f
-      payment.save
-      @order.save!
-      @order.next! until @order.state == "complete"
-      @order.update!
-      
-      render :text => "OK#{@order.id}"
+      payment = @order.payments.build({payment_method: @gateway, amount: params["OutSum"].to_f})
+      payment.complete
+      payment.save!
+      @order.update_attributes({:state => "complete", :completed_at => Time.now})
+      if @order.complete?
+        @order.update_with_updater!
+      end
     else
       render :text => "Invalid Signature"
     end

@@ -3,7 +3,33 @@ class Gateway::Robokassa < Spree::Gateway
   preference :password2, :string
   preference :mrch_login, :string
 
-  attr_accessible :preferred_password1, :preferred_password2, :preferred_mrch_login
+  attr_accessor :preferred_password1, :preferred_password2, :preferred_mrch_login
+
+
+  def preferred_password1
+    self.options[:password1]
+  end
+
+  def preferred_password2
+    self.options[:password2]
+  end
+
+  def preferred_mrch_login
+    self.options[:mrch_login]
+  end
+
+  def preferred_password1=(val)
+    self.preferences[:password1] = val
+  end
+
+  def preferred_password2=(val)
+    self.preferences[:password2] = val
+  end
+
+  def preferred_mrch_login=(val)
+    self.preferences[:mrch_login] = val
+  end
+
 
   def provider_class
     self.class
@@ -18,11 +44,11 @@ class Gateway::Robokassa < Spree::Gateway
   end
 
   def url
-    self.test? ? "http://test.robokassa.ru/Index.aspx" : "https://merchant.roboxchange.com/Index.aspx"
+    "http://auth.robokassa.ru/Merchant/Index.aspx"
   end
   
   def self.current
-    self.where(:type => self.to_s, :environment => Rails.env, :active => true).first
+    self.where(:type => self.to_s, :active => true).first
   end
 
   def desc
